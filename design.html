@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Ninjas – Telecom ETL Workflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060b14;
+    --surface: #0d1729;
+    --surface2: #111e35;
+    --accent: #00d4ff;
+    --accent2: #7b2fff;
+    --accent3: #ff6b35;
+    --gold: #f5c542;
+    --green: #00ff88;
+    --red: #ff4466;
+    --text: #c8dff5;
+    --muted: #5a7a9f;
+    --border: rgba(0,212,255,0.18);
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page-wrapper { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 60px 20px 50px;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .hero-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    padding: 4px 18px;
+    border-radius: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 20px;
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+  @keyframes pulse-badge {
+    0%,100% { box-shadow: 0 0 10px rgba(123,47,255,0.4); }
+    50% { box-shadow: 0 0 24px rgba(0,212,255,0.6); }
+  }
+  .hero h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 70%, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  .hero-sub {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+    font-size: 14px;
+    letter-spacing: 4px;
+    margin-bottom: 30px;
+    opacity: 0.85;
+  }
+  .hero-domain {
+    font-size: 18px;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  /* TEAM CARD */
+  .team-section {
+    margin: 50px 0 40px;
+  }
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .team-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    box-shadow: var(--glow), inset 0 0 60px rgba(0,212,255,0.02);
+  }
+  .team-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+  }
+  .team-name .ninja-icon { font-size: 28px; }
+  .team-divider { width: 1px; height: 48px; background: var(--border); }
+  .members { display: flex; gap: 12px; flex-wrap: wrap; flex: 1; }
+  .member {
+    background: var(--surface2);
+    border: 1px solid rgba(0,212,255,0.12);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    position: relative;
+    transition: all 0.2s;
+  }
+  .member::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 6px 6px 0 0;
+  }
+  .member:nth-child(1)::before { background: var(--accent); }
+  .member:nth-child(2)::before { background: var(--accent2); }
+  .member:nth-child(3)::before { background: var(--accent3); }
+  .member:nth-child(4)::before { background: var(--gold); }
+  .member:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,212,255,0.15); }
+  .member-role { font-size: 11px; color: var(--muted); font-family: 'Share Tech Mono', monospace; display: block; margin-top: 2px; }
+
+  /* SOURCES */
+  .sources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 16px; margin: 20px 0; }
+  .source-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .source-card:hover { transform: translateY(-3px); }
+  .source-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+  }
+  .source-card.s1::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .source-card.s2::before { background: linear-gradient(90deg, var(--accent2), var(--accent3)); }
+  .source-card.s3::before { background: linear-gradient(90deg, var(--accent3), var(--gold)); }
+  .source-icon { font-size: 28px; margin-bottom: 8px; }
+  .source-name { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--accent); margin-bottom: 10px; }
+  .col-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .col-tag {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text);
+  }
+
+  /* PIPELINE FLOW */
+  .pipeline {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .pipeline-phase {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 0;
+    position: relative;
+  }
+
+  .phase-label-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 28px;
+  }
+  .phase-badge {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 16px 10px;
+    border-radius: 4px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .phase-badge.extract { background: rgba(0,212,255,0.12); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .phase-badge.transform { background: rgba(123,47,255,0.12); color: var(--accent2); border: 1px solid rgba(123,47,255,0.3); }
+  .phase-badge.load { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+
+  .phase-connector {
+    flex: 1;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent2));
+    margin: 8px 0;
+    opacity: 0.3;
+  }
+
+  .phase-steps { padding: 0 0 24px 0; }
+
+  .step-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s;
+  }
+  .step-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(0,212,255,0.12);
+    transform: translateY(-2px);
+  }
+  .step-card .step-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .step-card h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+  .step-card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .step-card .detail-list { list-style: none; margin-top: 10px; }
+  .step-card .detail-list li {
+    font-size: 12px;
+    color: var(--text);
+    padding: 3px 0;
+    padding-left: 14px;
+    position: relative;
+  }
+  .step-card .detail-list li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .step-card .highlight {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: var(--accent);
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .step-card.accent-e { border-top: 2px solid var(--accent); }
+  .step-card.accent-t { border-top: 2px solid var(--accent2); }
+  .step-card.accent-l { border-top: 2px solid var(--green); }
+  .step-card.accent-s { border-top: 2px solid var(--accent3); }
+  .step-card.accent-g { border-top: 2px solid var(--gold); }
+
+  /* ARROW */
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    padding-left: 160px;
+    margin: 4px 0;
+  }
+  .arrow-line {
+    width: 2px;
+    height: 32px;
+    background: linear-gradient(to bottom, var(--accent2), var(--accent));
+    margin-left: 40px;
+    position: relative;
+    opacity: 0.5;
+  }
+  .arrow-line::after {
+    content: '▼';
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--accent);
+    font-size: 12px;
+    opacity: 1;
+  }
+
+  /* FORMULA BOX */
+  .formula-box {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,212,255,0.25);
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    margin-top: 10px;
+    color: var(--gold);
+  }
+  .formula-box .formula-label { font-size: 10px; color: var(--muted); margin-bottom: 6px; letter-spacing: 2px; }
+
+  /* STRETCH FEATURES */
+  .stretch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 16px; margin: 20px 0; }
+  .stretch-card {
+    background: var(--surface);
+    border: 1px solid rgba(123,47,255,0.25);
+    border-radius: 8px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stretch-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent3));
+  }
+  .stretch-icon { font-size: 30px; margin-bottom: 10px; }
+  .stretch-card h4 { font-family: 'Orbitron', sans-serif; font-size: 13px; color: #fff; margin-bottom: 8px; }
+  .stretch-card p { font-size: 13px; color: var(--muted); }
+  .stretch-card ul { list-style: none; margin-top: 10px; }
+  .stretch-card ul li {
+    font-size: 12px; color: var(--text); padding: 3px 0 3px 14px; position: relative;
+  }
+  .stretch-card ul li::before { content: '◆'; position: absolute; left: 0; font-size: 7px; color: var(--accent2); top: 6px; }
+
+  /* ANALYTICS */
+  .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 16px; margin: 20px 0; }
+  .analytics-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px;
+    position: relative;
+  }
+  .analytics-card .uc-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    opacity: 0.07;
+    position: absolute;
+    top: 12px; right: 16px;
+    color: var(--accent);
+    pointer-events: none;
+  }
+  .analytics-card h4 { font-family: 'Orbitron', sans-serif; font-size: 12px; color: var(--accent); margin-bottom: 14px; letter-spacing: 0.5px; }
+  .kpi-tag {
+    display: inline-block;
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--text);
+    margin: 3px 3px 3px 0;
+    font-weight: 600;
+  }
+
+  /* TOOLS */
+  .tools-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 20px 0; }
+  .tool-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .tool-chip:hover { border-color: var(--accent); box-shadow: var(--glow); }
+  .tool-chip .tool-icon { font-size: 22px; }
+  .tool-chip .tool-name { color: #fff; }
+  .tool-chip .tool-desc { font-size: 11px; color: var(--muted); font-family: 'Share Tech Mono', monospace; }
+
+  /* RESPONSIBILITY TABLE */
+  .resp-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  .resp-table th {
+    background: var(--surface2);
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+  }
+  .resp-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,212,255,0.07);
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .resp-table tr:hover td { background: rgba(0,212,255,0.03); }
+  .member-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; }
+  .d1 { background: var(--accent); }
+  .d2 { background: var(--accent2); }
+  .d3 { background: var(--accent3); }
+  .d4 { background: var(--gold); }
+  .phase-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .phase-pill.e { background: rgba(0,212,255,0.12); color: var(--accent); }
+  .phase-pill.t { background: rgba(123,47,255,0.12); color: var(--accent2); }
+  .phase-pill.l { background: rgba(0,255,136,0.1); color: var(--green); }
+  .phase-pill.s { background: rgba(255,107,53,0.12); color: var(--accent3); }
+
+  /* DB SCHEMA */
+  .schema-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 16px; margin: 20px 0; }
+  .schema-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .schema-header {
+    background: var(--surface2);
+    padding: 12px 18px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .schema-header .db-icon { font-size: 16px; }
+  .schema-body { padding: 14px 18px; }
+  .col-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 12px;
+  }
+  .col-row:last-child { border-bottom: none; }
+  .col-row .col-name { font-family: 'Share Tech Mono', monospace; color: var(--text); }
+  .col-row .col-type { color: var(--muted); font-size: 11px; }
+  .col-row .col-pk { color: var(--gold); font-size: 10px; font-weight: 700; }
+  .col-row .col-calc { color: var(--accent2); font-size: 10px; font-style: italic; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 60px;
+    text-align: center;
+    padding-top: 30px;
+    border-top: 1px solid var(--border);
+  }
+  .footer-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .footer-sub { font-size: 12px; color: var(--muted); font-family: 'Share Tech Mono', monospace; }
+
+  /* ANIMATIONS */
+  .step-card, .source-card, .stretch-card, .analytics-card, .schema-card {
+    animation: fadeInUp 0.5s ease both;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scanline effect */
+  .pipeline-phase .phase-steps { position: relative; }
+
+  .section-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 30px;
+    margin: 20px 0;
+  }
+
+  .big-arrow {
+    text-align: center;
+    font-size: 28px;
+    color: var(--accent2);
+    opacity: 0.5;
+    margin: 8px 0;
+    animation: bob 1.5s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">⚡ Informatica ETL Project</div>
+    <h1>TELECOM CDR<br>ETL PIPELINE</h1>
+    <div class="hero-sub">// CALL DETAIL RECORDS · EXTRACT · TRANSFORM · LOAD //</div>
+    <div class="hero-domain">Telecom Domain Use Case · Informatica + MySQL/Oracle</div>
+  </div>
+
+  <!-- TEAM -->
+  <div class="team-section" style="margin-top:50px;">
+    <div class="section-label">⬡ TEAM</div>
+    <div class="team-card">
+      <div class="team-name">
+        <span class="ninja-icon">🥷</span>
+        CLOUD NINJAS
+      </div>
+      <div class="team-divider"></div>
+      <div class="members">
+        <div class="member">
+          Thannamala Ruchitha
+          <span class="member-role">ETL · Extract Phase</span>
+        </div>
+        <div class="member">
+          Bhanu Teja
+          <span class="member-role">ETL · Transform Phase</span>
+        </div>
+        <div class="member">
+          Prasanna
+          <span class="member-role">ETL · Load Phase</span>
+        </div>
+        <div class="member">
+          Mansi
+          <span class="member-role">Analytics · Dashboard</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROBLEM STATEMENT -->
+  <div style="margin-top:44px;">
+    <div class="section-label">⬡ PROBLEM STATEMENT</div>
+    <div class="section-box" style="background: linear-gradient(135deg, var(--surface) 80%, rgba(0,212,255,0.04));">
+      <p style="font-size:16px; color:var(--text); line-height:1.8; font-weight:500;">
+        Telecom companies generate a massive volume of <span style="color:var(--accent); font-weight:700;">Call Detail Records (CDRs)</span> every day. Each record contains who made the call, who received it, call duration, call type, tower used, and timestamp. The data is raw, messy, and needs automated processing.
+      </p>
+      <p style="margin-top:14px; font-size:15px; color:var(--muted); line-height:1.7;">
+        The goal is to build a robust <strong style="color:var(--accent2);">ETL pipeline using Informatica</strong> that reads daily CDR CSV files, cleans and transforms them, calculates revenue and call classification fields, and loads the results into database staging and final tables for analysis.
+      </p>
+    </div>
+  </div>
+
+  <!-- SOURCE FILES -->
+  <div style="margin-top:44px;">
+    <div class="section-label">⬡ SOURCE FILES (INPUT DATA)</div>
+    <div class="sources-grid">
+      <div class="source-card s1">
+        <div class="source-icon">📋</div>
+        <div class="source-name">CDR_RAW_Telecom.csv</div>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Primary raw CDR data — one record per call</p>
+        <div class="col-list">
+          <span class="col-tag">CallID</span>
+          <span class="col-tag">Caller</span>
+          <span class="col-tag">Receiver</span>
+          <span class="col-tag">Duration</span>
+          <span class="col-tag">CallType</span>
+          <span class="col-tag">TowerID</span>
+          <span class="col-tag">Timestamp</span>
+        </div>
+      </div>
+      <div class="source-card s2">
+        <div class="source-icon">👥</div>
+        <div class="source-name">Customer_Master_Telecom.csv</div>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Customer reference / lookup data</p>
+        <div class="col-list">
+          <span class="col-tag">PhoneNumber</span>
+          <span class="col-tag">CustomerName</span>
+          <span class="col-tag">PlanType</span>
+        </div>
+      </div>
+      <div class="source-card s3">
+        <div class="source-icon">📡</div>
+        <div class="source-name">Tower_Master_Telecom.csv</div>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Tower location reference data</p>
+        <div class="col-list">
+          <span class="col-tag">TowerID</span>
+          <span class="col-tag">Region</span>
+          <span class="col-tag">City</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <div style="margin-top:44px;">
+    <div class="section-label">⬡ TOOLS &amp; TECHNOLOGY STACK</div>
+    <div class="tools-row">
+      <div class="tool-chip">
+        <span class="tool-icon">⚙️</span>
+        <div>
+          <div class="tool-name">Informatica PowerCenter</div>
+          <div class="tool-desc">ETL · Extract, Transform, Load</div>
+        </div>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-icon">🗄️</span>
+        <div>
+          <div class="tool-name">MySQL / Oracle / SQL</div>
+          <div class="tool-desc">Staging &amp; Final Tables</div>
+        </div>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-icon">📁</span>
+        <div>
+          <div class="tool-name">CSV Flat Files</div>
+          <div class="tool-desc">Source CDR Files (Daily)</div>
+        </div>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-icon">📊</span>
+        <div>
+          <div class="tool-name">Excel / Dashboard</div>
+          <div class="tool-desc">Customer Usage Reports</div>
+        </div>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-icon">📧</span>
+        <div>
+          <div class="tool-name">Email Alerts</div>
+          <div class="tool-desc">High Usage Notifications</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN ETL PIPELINE -->
+  <div style="margin-top:50px;">
+    <div class="section-label">⬡ CORE ETL PIPELINE — STEP BY STEP WORKFLOW</div>
+
+    <!-- EXTRACT -->
+    <div class="pipeline-phase">
+      <div class="phase-label-col">
+        <div class="phase-badge extract">EXTRACT</div>
+        <div class="phase-connector"></div>
+      </div>
+      <div class="phase-steps" style="padding-top:8px;">
+        <div class="step-row">
+          <div class="step-card accent-e">
+            <div class="step-num">STEP 01 · EXTRACT</div>
+            <h4>Load CDR CSV File</h4>
+            <p>Informatica reads the daily CDR flat file from the source storage location using a <strong>Flat File Source Definition</strong>.</p>
+            <ul class="detail-list">
+              <li>Connect to the source folder containing CDR_RAW_Telecom.csv</li>
+              <li>Define source schema: CallID, Caller, Receiver, Duration, CallType, TowerID, Timestamp</li>
+              <li>Also load Customer_Master and Tower_Master as lookup sources</li>
+              <li>Schedule to trigger daily (batch mode)</li>
+            </ul>
+            <span class="highlight">Informatica Source Qualifier</span>
+          </div>
+          <div class="step-card accent-e">
+            <div class="step-num">STEP 02 · EXTRACT</div>
+            <h4>Source Qualifier &amp; Initial Pass</h4>
+            <p>Source Qualifier transformation reads and passes raw rows into the pipeline for downstream processing.</p>
+            <ul class="detail-list">
+              <li>All 7 columns from CDR are passed through</li>
+              <li>Customer and Tower master data loaded as lookup tables</li>
+              <li>No filtering at this stage — all rows come in</li>
+            </ul>
+            <span class="highlight">Informatica Workflow Manager</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="big-arrow">⬇</div>
+
+    <!-- TRANSFORM -->
+    <div class="pipeline-phase">
+      <div class="phase-label-col">
+        <div class="phase-badge transform">TRANSFORM</div>
+        <div class="phase-connector"></div>
+      </div>
+      <div class="phase-steps" style="padding-top:8px;">
+
+        <div class="step-row">
+          <div class="step-card accent-t">
+            <div class="step-num">STEP 03 · TRANSFORM</div>
+            <h4>Duplicate Removal</h4>
+            <p>Remove duplicate CDR entries to ensure data accuracy and prevent double-counting in reports.</p>
+            <ul class="detail-list">
+              <li>Use <strong>Sorter Transformation</strong> on CallID + Timestamp</li>
+              <li>Apply <strong>Aggregator or Router</strong> to identify and discard duplicate rows</li>
+              <li>Keep only one record per unique CallID</li>
+            </ul>
+            <span class="highlight">Sorter + Router Transformation</span>
+          </div>
+          <div class="step-card accent-t">
+            <div class="step-num">STEP 04 · TRANSFORM</div>
+            <h4>Date / Time Standardization</h4>
+            <p>Fix incorrect or inconsistent date/time formats in the Timestamp column to a unified standard.</p>
+            <ul class="detail-list">
+              <li>Use <strong>Expression Transformation</strong> with TO_DATE() function</li>
+              <li>Convert all formats → YYYY-MM-DD HH24:MI:SS</li>
+              <li>Flag rows with unparseable timestamps for audit log</li>
+            </ul>
+            <span class="highlight">Expression Transformation</span>
+          </div>
+        </div>
+
+        <div class="step-row">
+          <div class="step-card accent-t">
+            <div class="step-num">STEP 05 · TRANSFORM</div>
+            <h4>Null Duration Handling</h4>
+            <p>Replace missing or null call duration values with 0 to prevent calculation errors downstream.</p>
+            <ul class="detail-list">
+              <li>Use <strong>Expression Transformation</strong>: IIF(ISNULL(Duration), 0, Duration)</li>
+              <li>Ensures Revenue calculation doesn't fail on NULLs</li>
+            </ul>
+            <span class="highlight">IIF(ISNULL(Duration), 0, Duration)</span>
+          </div>
+          <div class="step-card accent-t">
+            <div class="step-num">STEP 06 · TRANSFORM</div>
+            <h4>Data Validation Checks</h4>
+            <p>Add validation to catch bad data — invalid phone numbers, negative durations, malformed records.</p>
+            <ul class="detail-list">
+              <li>Check Duration ≥ 0 (reject negatives → reject file)</li>
+              <li>Validate Caller / Receiver phone number format</li>
+              <li>Route bad records to error/reject pipeline</li>
+              <li>Capture validation failure counts in audit log</li>
+            </ul>
+            <span class="highlight">Router Transformation · Reject Port</span>
+          </div>
+        </div>
+
+        <div class="step-row">
+          <div class="step-card accent-t" style="border-top-color: var(--gold);">
+            <div class="step-num">STEP 07 · TRANSFORM · CALCULATED FIELDS</div>
+            <h4>Revenue Calculation</h4>
+            <p>Compute the revenue generated from each call based on duration and a per-second charge rate.</p>
+            <div class="formula-box">
+              <div class="formula-label">FORMULA</div>
+              Revenue = Duration × 0.02
+            </div>
+            <ul class="detail-list" style="margin-top:10px;">
+              <li>Charge rate: ₹0.02 per second</li>
+              <li>Implemented in <strong>Expression Transformation</strong></li>
+              <li>Output: new column <em>Revenue</em> added to the pipeline</li>
+            </ul>
+            <span class="highlight">Expression: Duration * 0.02</span>
+          </div>
+          <div class="step-card accent-t" style="border-top-color: var(--accent3);">
+            <div class="step-num">STEP 08 · TRANSFORM · CALCULATED FIELDS</div>
+            <h4>IsInternational Flag</h4>
+            <p>Classify each call as international or domestic based on CallType field.</p>
+            <div class="formula-box">
+              <div class="formula-label">FORMULA</div>
+              IsInternational = IIF(CallType = 'INT', 1, 0)
+            </div>
+            <ul class="detail-list" style="margin-top:10px;">
+              <li>CallType values: LOCAL, STD, INT</li>
+              <li>INT → IsInternational = 1</li>
+              <li>LOCAL / STD → IsInternational = 0</li>
+              <li>Enables easy international call filtering in analytics</li>
+            </ul>
+            <span class="highlight">IIF(CallType = 'INT', 1, 0)</span>
+          </div>
+        </div>
+
+        <div class="step-row">
+          <div class="step-card accent-t">
+            <div class="step-num">STEP 09 · TRANSFORM · ENRICHMENT</div>
+            <h4>Customer &amp; Tower Lookup</h4>
+            <p>Enrich CDR records by joining with Customer Master and Tower Master using Lookup transformations.</p>
+            <ul class="detail-list">
+              <li>Lookup on Caller phone → get CustomerName, PlanType</li>
+              <li>Lookup on TowerID → get Region, City</li>
+              <li>Use <strong>Lookup Transformation</strong> (connected, cached)</li>
+              <li>Unmatched records flagged in audit log</li>
+            </ul>
+            <span class="highlight">Lookup Transformation (Cached)</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="big-arrow">⬇</div>
+
+    <!-- LOAD -->
+    <div class="pipeline-phase">
+      <div class="phase-label-col">
+        <div class="phase-badge load">LOAD</div>
+      </div>
+      <div class="phase-steps" style="padding-top:8px;">
+        <div class="step-row">
+          <div class="step-card accent-l">
+            <div class="step-num">STEP 10 · LOAD</div>
+            <h4>Load to Staging Table</h4>
+            <p>Load cleaned, transformed CDR data into the database <strong>Staging Table</strong> as a holding area before final load.</p>
+            <ul class="detail-list">
+              <li>Target: STG_CDR_Telecom (staging table in MySQL/Oracle)</li>
+              <li>Truncate-and-Insert mode (daily refresh)</li>
+              <li>All transformed columns loaded including Revenue &amp; IsInternational</li>
+              <li>Staging table retains data for audit and re-processing</li>
+            </ul>
+            <span class="highlight">Informatica Target Definition · Staging</span>
+          </div>
+          <div class="step-card accent-l">
+            <div class="step-num">STEP 11 · LOAD</div>
+            <h4>Load to Final Table</h4>
+            <p>Move validated, enriched data from staging into the <strong>Final Production Table</strong> for reporting and analytics.</p>
+            <ul class="detail-list">
+              <li>Target: CDR_FINAL_Telecom (production table)</li>
+              <li>Insert or Upsert based on CallID (primary key)</li>
+              <li>Includes CustomerName, Region, City from lookups</li>
+              <li>This table feeds all analytical use cases and dashboards</li>
+            </ul>
+            <span class="highlight">Informatica Target Definition · Final</span>
+          </div>
+          <div class="step-card accent-l" style="border-top-color: var(--muted);">
+            <div class="step-num">STEP 12 · LOAD · AUDIT</div>
+            <h4>Capture Load Audit Logs</h4>
+            <p>Record success/failure counts, row counts, and error details for monitoring and debugging.</p>
+            <ul class="detail-list">
+              <li>Log: Total rows read, rows inserted, rows rejected</li>
+              <li>Capture timestamp of each load run</li>
+              <li>Write to AUDIT_LOG table in database</li>
+            </ul>
+            <span class="highlight">Workflow Monitor · Session Log</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATABASE SCHEMA -->
+  <div style="margin-top:50px;">
+    <div class="section-label">⬡ DATABASE SCHEMA — TARGET TABLES</div>
+    <div class="schema-grid">
+      <div class="schema-card">
+        <div class="schema-header"><span class="db-icon">🗂️</span>STG_CDR_Telecom (Staging)</div>
+        <div class="schema-body">
+          <div class="col-row"><span class="col-name">CallID</span><span class="col-pk">PK</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Caller</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Receiver</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Duration</span><span class="col-type">NUMBER</span></div>
+          <div class="col-row"><span class="col-name">CallType</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">TowerID</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Timestamp</span><span class="col-type">DATETIME</span></div>
+          <div class="col-row"><span class="col-name">Revenue</span><span class="col-calc">Calculated</span><span class="col-type">DECIMAL</span></div>
+          <div class="col-row"><span class="col-name">IsInternational</span><span class="col-calc">Calculated</span><span class="col-type">INT (0/1)</span></div>
+        </div>
+      </div>
+      <div class="schema-card">
+        <div class="schema-header"><span class="db-icon">🗄️</span>CDR_FINAL_Telecom (Production)</div>
+        <div class="schema-body">
+          <div class="col-row"><span class="col-name">CallID</span><span class="col-pk">PK</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Caller</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">CustomerName</span><span class="col-calc">Lookup</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">PlanType</span><span class="col-calc">Lookup</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Receiver</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Duration</span><span class="col-type">NUMBER</span></div>
+          <div class="col-row"><span class="col-name">CallType</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Region</span><span class="col-calc">Lookup</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">City</span><span class="col-calc">Lookup</span><span class="col-type">VARCHAR</span></div>
+          <div class="col-row"><span class="col-name">Timestamp</span><span class="col-type">DATETIME</span></div>
+          <div class="col-row"><span class="col-name">Revenue</span><span class="col-calc">Calculated</span><span class="col-type">DECIMAL</span></div>
+          <div class="col-row"><span class="col-name">IsInternational</span><span class="col-calc">Calculated</span><span class="col-type">INT (0/1)</span></div>
+        </div>
+      </div>
+      <div class="schema-card">
+        <div class="schema-header"><span class="db-icon">📝</span>AUDIT_LOG Table</div>
+        <div class="schema-body">
+          <div class="col-row"><span class="col-name">LogID</span><span class="col-pk">PK</span><span class="col-type">INT</span></div>
+          <div class="col-row"><span class="col-name">RunDate</span><span class="col-type">DATETIME</span></div>
+          <div class="col-row"><span class="col-name">TotalRowsRead</span><span class="col-type">INT</span></div>
+          <div class="col-row"><span class="col-name">RowsInserted</span><span class="col-type">INT</span></div>
+          <div class="col-row"><span class="col-name">RowsRejected</span><span class="col-type">INT</span></div>
+          <div class="col-row"><span class="col-name">Status</span><span class="col-type">VARCHAR (SUCCESS/FAIL)</span></div>
+          <div class="col-row"><span class="col-name">ErrorDetails</span><span class="col-type">TEXT</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STRETCH FEATURES -->
+  <div style="margin-top:50px;">
+    <div class="section-label">⬡ STRETCH FEATURES (ENHANCED)</div>
+    <div class="stretch-grid">
+      <div class="stretch-card">
+        <div class="stretch-icon">📊</div>
+        <h4>Customer Usage Dashboard</h4>
+        <p>Build an Excel-based report or dashboard that visualizes customer call patterns and revenue from the final table.</p>
+        <ul>
+          <li>Revenue summary per customer</li>
+          <li>Call volume trends over time</li>
+          <li>Top customers by usage &amp; revenue</li>
+          <li>International vs domestic breakdown</li>
+        </ul>
+      </div>
+      <div class="stretch-card">
+        <div class="stretch-icon">🚨</div>
+        <h4>High Usage Alert Table</h4>
+        <p>Detect customers with unusually high call duration and flag them in a dedicated alert table.</p>
+        <ul>
+          <li>Create HIGH_USAGE_ALERT table</li>
+          <li>Threshold: daily duration above defined limit</li>
+          <li>Trigger automatically during ETL load</li>
+          <li>Send email alert notification for flagged customers</li>
+        </ul>
+      </div>
+      <div class="stretch-card">
+        <div class="stretch-icon">📧</div>
+        <h4>Email Alert Notification</h4>
+        <p>Automatically email stakeholders when high-usage customers are detected or when ETL runs fail.</p>
+        <ul>
+          <li>Configure in Informatica Workflow Post-Session email</li>
+          <li>Alert on: high usage detection, pipeline failure, load completion</li>
+          <li>Include run summary stats in email body</li>
+        </ul>
+      </div>
+      <div class="stretch-card">
+        <div class="stretch-icon">✅</div>
+        <h4>Validation &amp; Audit Logs</h4>
+        <p>Comprehensive data quality enforcement and monitoring for production-grade reliability.</p>
+        <ul>
+          <li>Validate phone number formats</li>
+          <li>Reject negative durations</li>
+          <li>Success/failure row counts per run</li>
+          <li>All results logged in AUDIT_LOG table</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICAL USE CASES -->
+  <div style="margin-top:50px;">
+    <div class="section-label">⬡ ANALYTICAL USE CASES — KPIs &amp; REPORTS</div>
+    <div class="analytics-grid">
+      <div class="analytics-card">
+        <div class="uc-num">1</div>
+        <h4>USE CASE 1 · DAILY CALL VOLUME SUMMARY</h4>
+        <div>
+          <span class="kpi-tag">Unique Customers Called</span>
+          <span class="kpi-tag">Daily Active Customers</span>
+          <span class="kpi-tag">Avg Calls per Active Customer</span>
+          <span class="kpi-tag">Peak Call Duration (Max)</span>
+          <span class="kpi-tag">Daily Call Volume Trend %</span>
+        </div>
+      </div>
+      <div class="analytics-card">
+        <div class="uc-num">2</div>
+        <h4>USE CASE 2 · CALL TYPE PERFORMANCE ANALYSIS</h4>
+        <div>
+          <span class="kpi-tag">Total Calls by Call Type</span>
+          <span class="kpi-tag">Total Duration by Call Type</span>
+          <span class="kpi-tag">Revenue by Call Type</span>
+          <span class="kpi-tag">Avg Revenue per Call by Type</span>
+        </div>
+      </div>
+      <div class="analytics-card">
+        <div class="uc-num">3</div>
+        <h4>USE CASE 3 · INTERNATIONAL CALL MONITORING</h4>
+        <div>
+          <span class="kpi-tag">International Call Count</span>
+          <span class="kpi-tag">International Call Duration</span>
+          <span class="kpi-tag">International Revenue Per Call</span>
+          <span class="kpi-tag">% of International Calls</span>
+        </div>
+      </div>
+      <div class="analytics-card">
+        <div class="uc-num">4</div>
+        <h4>USE CASE 4 · REVENUE DATA</h4>
+        <div>
+          <span class="kpi-tag">Revenue per Customer</span>
+          <span class="kpi-tag">% Contribution to Total Revenue</span>
+          <span class="kpi-tag">Top 2 Customers by Revenue</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM RESPONSIBILITY -->
+  <div style="margin-top:50px;">
+    <div class="section-label">⬡ TEAM RESPONSIBILITY MATRIX</div>
+    <div class="section-box" style="padding:0; overflow:hidden;">
+      <table class="resp-table">
+        <thead>
+          <tr>
+            <th>TEAM MEMBER</th>
+            <th>PHASE</th>
+            <th>RESPONSIBILITY</th>
+            <th>INFORMATICA COMPONENT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="member-dot d1"></span><strong>Thannamala Ruchitha</strong></td>
+            <td><span class="phase-pill e">EXTRACT</span></td>
+            <td>Set up Informatica source connections for CDR, Customer Master &amp; Tower Master CSV files. Configure Source Qualifier.</td>
+            <td style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted);">Source Definition, Source Qualifier, Workflow Setup</td>
+          </tr>
+          <tr>
+            <td><span class="member-dot d2"></span><strong>Bhanu Teja</strong></td>
+            <td><span class="phase-pill t">TRANSFORM</span></td>
+            <td>Build all transformation logic: duplicate removal, date standardization, null handling, Revenue &amp; IsInternational calculated fields, Lookup enrichment.</td>
+            <td style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted);">Expression, Sorter, Router, Lookup, Aggregator Transformations</td>
+          </tr>
+          <tr>
+            <td><span class="member-dot d3"></span><strong>Prasanna</strong></td>
+            <td><span class="phase-pill l">LOAD</span></td>
+            <td>Configure database target connections, create Staging and Final tables in MySQL/Oracle, set up load logic and audit log capture.</td>
+            <td style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted);">Target Definition, Session Config, Workflow Monitor, Audit Log</td>
+          </tr>
+          <tr>
+            <td><span class="member-dot d4"></span><strong>Mansi</strong></td>
+            <td><span class="phase-pill s">ANALYTICS</span></td>
+            <td>Build the Customer Usage Dashboard (Excel/reporting), configure High Usage Alert table, set up email notification alerts for anomalies and ETL status.</td>
+            <td style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted);">Post-Session Email, Excel Report, Alert Table Queries, KPI SQL</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- WORKFLOW SUMMARY -->
+  <div style="margin-top:50px;">
+    <div class="section-label">⬡ COMPLETE WORKFLOW SUMMARY</div>
+    <div class="section-box">
+      <div style="display:flex; flex-wrap:wrap; gap:0; align-items:stretch;">
+        <div style="flex:1; min-width:130px; text-align:center; padding:16px 10px; border-right:1px solid var(--border);">
+          <div style="font-size:28px; margin-bottom:6px;">📂</div>
+          <div style="font-family:'Orbitron',sans-serif; font-size:10px; color:var(--accent); letter-spacing:1px; margin-bottom:4px;">SOURCE</div>
+          <div style="font-size:12px; color:var(--muted);">3 CSV Files daily CDR + Masters</div>
+        </div>
+        <div style="display:flex; align-items:center; padding:0 8px; color:var(--accent2); font-size:20px;">→</div>
+        <div style="flex:1; min-width:130px; text-align:center; padding:16px 10px; border-right:1px solid var(--border);">
+          <div style="font-size:28px; margin-bottom:6px;">⚙️</div>
+          <div style="font-family:'Orbitron',sans-serif; font-size:10px; color:var(--accent); letter-spacing:1px; margin-bottom:4px;">EXTRACT</div>
+          <div style="font-size:12px; color:var(--muted);">Informatica Source Qualifier loads raw records</div>
+        </div>
+        <div style="display:flex; align-items:center; padding:0 8px; color:var(--accent2); font-size:20px;">→</div>
+        <div style="flex:1; min-width:130px; text-align:center; padding:16px 10px; border-right:1px solid var(--border);">
+          <div style="font-size:28px; margin-bottom:6px;">🔧</div>
+          <div style="font-family:'Orbitron',sans-serif; font-size:10px; color:var(--accent2); letter-spacing:1px; margin-bottom:4px;">TRANSFORM</div>
+          <div style="font-size:12px; color:var(--muted);">Clean · Deduplicate · Calculate · Enrich</div>
+        </div>
+        <div style="display:flex; align-items:center; padding:0 8px; color:var(--accent2); font-size:20px;">→</div>
+        <div style="flex:1; min-width:130px; text-align:center; padding:16px 10px; border-right:1px solid var(--border);">
+          <div style="font-size:28px; margin-bottom:6px;">🗄️</div>
+          <div style="font-family:'Orbitron',sans-serif; font-size:10px; color:var(--green); letter-spacing:1px; margin-bottom:4px;">LOAD</div>
+          <div style="font-size:12px; color:var(--muted);">Staging → Final Table + Audit Log</div>
+        </div>
+        <div style="display:flex; align-items:center; padding:0 8px; color:var(--accent2); font-size:20px;">→</div>
+        <div style="flex:1; min-width:130px; text-align:center; padding:16px 10px;">
+          <div style="font-size:28px; margin-bottom:6px;">📊</div>
+          <div style="font-family:'Orbitron',sans-serif; font-size:10px; color:var(--gold); letter-spacing:1px; margin-bottom:4px;">ANALYTICS</div>
+          <div style="font-size:12px; color:var(--muted);">Dashboard · KPIs · Alerts · Reports</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-logo">🥷 CLOUD NINJAS</div>
+    <div class="footer-sub">Telecom Domain ETL Pipeline · Informatica · 2026</div>
+    <div style="margin-top:10px; font-size:11px; color:var(--muted); opacity:0.5; font-family:'Share Tech Mono',monospace;">
+      Ruchitha · Bhanu Teja · Prasanna · Mansi
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
