@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mansi – Analytics Phase · Cloud Ninjas ETL</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060b14;
+    --surface: #0d1729;
+    --surface2: #111e35;
+    --accent: #00d4ff;
+    --accent2: #7b2fff;
+    --accent3: #ff6b35;
+    --gold: #f5c542;
+    --green: #00ff88;
+    --red: #ff4466;
+    --text: #c8dff5;
+    --muted: #5a7a9f;
+    --border: rgba(0,212,255,0.18);
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+  .page-wrapper { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:40px 24px 80px; }
+
+  /* ── HERO ── */
+  .hero { text-align:center; padding:60px 20px 50px; position:relative; }
+  .hero::after {
+    content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+    width:600px; height:1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .hero-badge {
+    display:inline-block;
+    background: linear-gradient(135deg, var(--accent3), var(--gold));
+    padding:4px 18px; border-radius:2px;
+    font-family:'Share Tech Mono',monospace; font-size:11px;
+    letter-spacing:3px; text-transform:uppercase; color:#fff;
+    margin-bottom:20px;
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+  @keyframes pulse-badge {
+    0%,100%{ box-shadow:0 0 10px rgba(255,107,53,0.4); }
+    50%{ box-shadow:0 0 24px rgba(245,197,66,0.6); }
+  }
+  .hero h1 {
+    font-family:'Orbitron',sans-serif;
+    font-size:clamp(28px,5vw,52px); font-weight:900; letter-spacing:2px;
+    background: linear-gradient(135deg, #fff 30%, var(--gold) 65%, var(--accent3));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    line-height:1.1; margin-bottom:10px;
+  }
+  .hero-sub {
+    font-family:'Share Tech Mono',monospace; color:var(--gold);
+    font-size:13px; letter-spacing:4px; margin-bottom:16px; opacity:.85;
+  }
+  .hero-owner {
+    display:inline-flex; align-items:center; gap:12px;
+    background:var(--surface); border:1px solid rgba(245,197,66,0.25);
+    border-radius:30px; padding:10px 24px; margin-top:14px;
+  }
+  .owner-dot {
+    width:10px; height:10px; border-radius:50%;
+    background:var(--gold); box-shadow:0 0 8px var(--gold);
+    animation:blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .owner-name { font-family:'Orbitron',sans-serif; font-size:15px; font-weight:700; color:#fff; letter-spacing:1px; }
+  .owner-role { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--gold); letter-spacing:2px; }
+
+  /* ── LABELS ── */
+  .section-label {
+    font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:4px;
+    color:var(--accent); text-transform:uppercase; margin-bottom:16px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  .section-box {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:28px 30px; margin:20px 0;
+  }
+  .divider { height:1px; background:var(--border); margin:28px 0; opacity:0.5; }
+
+  /* ── RESPONSIBILITY HIGHLIGHT ── */
+  .resp-highlight {
+    background: linear-gradient(135deg, rgba(245,197,66,0.07), rgba(0,212,255,0.04));
+    border:1px solid rgba(245,197,66,0.25); border-radius:10px;
+    padding:24px; margin:20px 0;
+  }
+  .resp-highlight h4 { font-family:'Orbitron',sans-serif; font-size:13px; color:var(--gold); margin-bottom:14px; letter-spacing:1px; }
+  .resp-tags { display:flex; flex-wrap:wrap; gap:8px; }
+  .resp-tag {
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(245,197,66,0.08); border:1px solid rgba(245,197,66,0.25);
+    border-radius:20px; padding:5px 14px; font-size:13px; font-weight:600; color:var(--text);
+  }
+  .resp-tag .rt-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); }
+
+  /* ── TASK CARD ── */
+  .task-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; overflow:hidden; margin:20px 0;
+    transition:box-shadow 0.25s;
+    animation:fadeInUp 0.5s ease both;
+  }
+  .task-card:hover { box-shadow:0 0 28px rgba(0,212,255,0.1); }
+  @keyframes fadeInUp{ from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .task-header {
+    background:var(--surface2); padding:16px 24px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:14px;
+  }
+  .task-num {
+    font-family:'Orbitron',sans-serif; font-size:11px; font-weight:700;
+    border-radius:4px; padding:3px 10px; letter-spacing:2px;
+  }
+  .task-num.t1 { background:rgba(0,212,255,0.12); color:var(--accent); border:1px solid rgba(0,212,255,0.3); }
+  .task-num.t2 { background:rgba(245,197,66,0.12); color:var(--gold);   border:1px solid rgba(245,197,66,0.3); }
+  .task-num.t3 { background:rgba(123,47,255,0.12); color:var(--accent2); border:1px solid rgba(123,47,255,0.3); }
+  .task-title { font-family:'Orbitron',sans-serif; font-size:14px; color:#fff; font-weight:700; letter-spacing:1px; }
+  .task-body { padding:24px; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow-diagram {
+    display:flex; align-items:center; flex-wrap:wrap; gap:0; margin:20px 0;
+  }
+  .flow-node {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:14px 18px; text-align:center;
+    flex:1; min-width:110px; transition:all 0.2s;
+  }
+  .flow-node:hover { transform:translateY(-2px); }
+  .flow-node.src   { border-top:2px solid var(--accent); }
+  .flow-node.trx   { border-top:2px solid var(--accent2); }
+  .flow-node.agg   { border-top:2px solid var(--gold); }
+  .flow-node.expr  { border-top:2px solid var(--accent3); }
+  .flow-node.tgt   { border-top:2px solid var(--green); }
+  .flow-node.dash  { border-top:2px solid var(--gold); }
+  .flow-node.orch  { border-top:2px solid var(--red); }
+  .node-icon { font-size:22px; margin-bottom:6px; }
+  .node-label { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; margin-bottom:4px; }
+  .node-name { font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700; color:#fff; letter-spacing:0.5px; }
+  .flow-arrow {
+    font-size:20px; color:var(--accent2); padding:0 6px;
+    opacity:0.7; flex-shrink:0;
+    animation:flow-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes flow-pulse{ 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  /* ── DATAFLOW STAGES ── */
+  .stage-list { display:flex; flex-direction:column; gap:0; margin:20px 0; }
+  .stage-item {
+    display:flex; gap:0; align-items:stretch; position:relative;
+  }
+  .stage-item:not(:last-child)::after {
+    content:''; position:absolute; left:27px; top:52px; bottom:0;
+    width:2px;
+    background:linear-gradient(to bottom, var(--accent2), transparent);
+    opacity:0.35;
+  }
+  .stage-left {
+    display:flex; flex-direction:column; align-items:center;
+    padding:0 20px 32px 0; flex-shrink:0;
+  }
+  .stage-icon-wrap {
+    width:54px; height:54px; border-radius:50%;
+    border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; background:var(--surface2); flex-shrink:0;
+    box-shadow:0 0 12px rgba(0,212,255,0.07);
+  }
+  .stage-right {
+    background:var(--surface2); border:1px solid rgba(0,212,255,0.1);
+    border-radius:8px; padding:16px 20px; flex:1; margin-bottom:14px;
+  }
+  .stage-right h5 {
+    font-family:'Orbitron',sans-serif; font-size:12px;
+    font-weight:700; letter-spacing:0.5px; margin-bottom:6px;
+  }
+  .stage-right p { font-size:13px; color:var(--muted); line-height:1.6; }
+  .stage-tag {
+    display:inline-block; font-family:'Share Tech Mono',monospace; font-size:10px;
+    border-radius:3px; padding:2px 8px; margin:3px 2px;
+  }
+  .stage-tag.blue  { background:rgba(0,212,255,0.08);  border:1px solid rgba(0,212,255,0.2);  color:var(--accent); }
+  .stage-tag.green { background:rgba(0,255,136,0.08);  border:1px solid rgba(0,255,136,0.2);  color:var(--green); }
+  .stage-tag.gold  { background:rgba(245,197,66,0.08); border:1px solid rgba(245,197,66,0.2); color:var(--gold); }
+  .stage-tag.red   { background:rgba(255,68,102,0.08); border:1px solid rgba(255,68,102,0.2); color:var(--red); }
+  .stage-tag.purple{ background:rgba(123,47,255,0.08); border:1px solid rgba(123,47,255,0.2); color:var(--accent2); }
+  .stage-tag.orange{ background:rgba(255,107,53,0.08); border:1px solid rgba(255,107,53,0.2); color:var(--accent3); }
+
+  /* ── AGG CHIPS ── */
+  .agg-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin:14px 0; }
+  .agg-chip {
+    background:var(--surface2); border:1px solid rgba(245,197,66,0.2);
+    border-left:3px solid var(--gold); border-radius:6px; padding:12px 14px;
+  }
+  .agg-chip .agg-label { font-size:10px; color:var(--muted); font-family:'Share Tech Mono',monospace; letter-spacing:1px; margin-bottom:4px; }
+  .agg-chip .agg-expr  { font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--gold); }
+  .agg-chip .agg-target{ font-size:11px; color:var(--green); margin-top:4px; }
+
+  /* ── FORMULA BOX ── */
+  .formula-box {
+    background:rgba(0,0,0,0.45);
+    border:1px solid rgba(0,212,255,0.25);
+    border-left:3px solid var(--gold);
+    border-radius:6px; padding:14px 18px;
+    font-family:'Share Tech Mono',monospace; font-size:13px;
+    margin:12px 0;
+  }
+  .formula-label { font-size:10px; color:var(--muted); margin-bottom:8px; letter-spacing:2px; }
+  .formula-line { color:#fff; margin:4px 0; }
+  .formula-line .kw  { color:var(--accent); }
+  .formula-line .fn  { color:var(--gold); }
+  .formula-line .val { color:var(--green); }
+  .formula-line .cm  { color:var(--muted); font-style:italic; }
+
+  /* ── PORT TABLE ── */
+  .port-table { width:100%; border-collapse:collapse; margin:14px 0; }
+  .port-table th {
+    background:var(--surface2); padding:9px 14px; text-align:left;
+    font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px;
+    color:var(--accent); border-bottom:1px solid var(--border);
+  }
+  .port-table td { padding:9px 14px; border-bottom:1px solid rgba(0,212,255,0.06); font-size:12px; font-family:'Share Tech Mono',monospace; vertical-align:middle; }
+  .port-table tr:hover td { background:rgba(0,212,255,0.03); }
+  .port-table .arr { color:var(--accent2); font-size:14px; text-align:center; }
+  .port-table .psrc { color:var(--text); }
+  .port-table .ptgt { color:var(--green); font-weight:700; }
+  .port-table .pexpr{ color:var(--gold); }
+
+  /* ── TASKFLOW CANVAS ── */
+  .tf-canvas {
+    background:rgba(0,0,0,0.3); border:1px solid rgba(123,47,255,0.25);
+    border-radius:10px; padding:28px 24px; margin:20px 0;
+  }
+  .tf-canvas-title {
+    font-family:'Share Tech Mono',monospace; font-size:10px;
+    color:var(--accent2); letter-spacing:3px; margin-bottom:20px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tf-canvas-title::after{ content:'IICS CANVAS'; }
+  .tf-row {
+    display:flex; align-items:center; justify-content:center;
+    flex-wrap:wrap; gap:6px; margin-bottom:6px;
+  }
+  .tf-node {
+    display:flex; flex-direction:column; align-items:center;
+    gap:4px; min-width:110px;
+  }
+  .tf-box {
+    border-radius:8px; padding:12px 16px; text-align:center;
+    font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700;
+    letter-spacing:0.5px; width:130px;
+    position:relative; transition:all 0.2s;
+  }
+  .tf-box:hover { transform:translateY(-2px); }
+  .tf-box.start   { background:rgba(0,255,136,0.12); border:1px solid rgba(0,255,136,0.4);  color:var(--green); }
+  .tf-box.end     { background:rgba(255,68,102,0.12); border:1px solid rgba(255,68,102,0.4); color:var(--red); }
+  .tf-box.mct     { background:rgba(0,212,255,0.1);   border:1px solid rgba(0,212,255,0.4);  color:var(--accent); }
+  .tf-box.decision{ background:rgba(245,197,66,0.1);  border:1px solid rgba(245,197,66,0.4); color:var(--gold); clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%); width:100px; height:80px; display:flex; align-items:center; justify-content:center; }
+  .tf-box.notif   { background:rgba(255,68,102,0.1);  border:1px solid rgba(255,68,102,0.35); color:var(--red); }
+  .tf-box.success { background:rgba(0,255,136,0.08);  border:1px solid rgba(0,255,136,0.3);  color:var(--green); }
+  .tf-box-icon { font-size:18px; margin-bottom:4px; }
+  .tf-box-sub { font-size:9px; color:var(--muted); font-family:'Share Tech Mono',monospace; margin-top:3px; }
+  .tf-arrow-v {
+    font-size:18px; color:var(--accent2); opacity:0.6;
+    margin:2px 0;
+    animation:flow-pulse 1.8s ease-in-out infinite;
+  }
+  .tf-arrow-h {
+    font-size:18px; color:var(--accent2); opacity:0.6;
+    animation:flow-pulse 1.8s ease-in-out infinite;
+  }
+  .tf-path-label {
+    font-family:'Share Tech Mono',monospace; font-size:9px;
+    color:var(--muted); letter-spacing:1px; margin-top:2px;
+  }
+  .tf-path-label.success-path { color:var(--green); }
+  .tf-path-label.fail-path    { color:var(--red); }
+
+  /* ── STEP CARDS ── */
+  .steps-wrap { display:flex; flex-direction:column; gap:0; margin:20px 0; }
+  .step-item  { display:flex; gap:18px; position:relative; }
+  .step-item:not(:last-child)::after {
+    content:''; position:absolute; left:19px; top:40px; bottom:0;
+    width:2px; background:linear-gradient(to bottom,var(--accent2),transparent); opacity:0.35;
+  }
+  .step-bubble {
+    width:40px; height:40px; border-radius:50%;
+    background:rgba(123,47,255,0.1); border:1px solid rgba(123,47,255,0.35);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Orbitron',sans-serif; font-size:11px; font-weight:700;
+    color:var(--accent2); flex-shrink:0;
+  }
+  .step-content {
+    background:var(--surface2); border:1px solid rgba(0,212,255,0.1);
+    border-radius:8px; padding:16px 20px; flex:1; margin-bottom:14px;
+  }
+  .step-content h5 {
+    font-family:'Orbitron',sans-serif; font-size:12px;
+    color:var(--accent); margin-bottom:8px; letter-spacing:0.5px;
+  }
+  .step-content p { font-size:13px; color:var(--muted); line-height:1.6; }
+  .step-content ul { list-style:none; margin-top:10px; }
+  .step-content ul li {
+    font-size:12px; color:var(--text); padding:3px 0 3px 14px; position:relative;
+  }
+  .step-content ul li::before { content:'›'; position:absolute; left:0; color:var(--accent2); font-weight:700; }
+  .mono { font-family:'Share Tech Mono',monospace; color:var(--accent); font-size:12px; background:rgba(0,212,255,0.07); border:1px solid rgba(0,212,255,0.18); border-radius:3px; padding:1px 7px; }
+  .mono.green { color:var(--green); background:rgba(0,255,136,0.07); border-color:rgba(0,255,136,0.2); }
+  .mono.gold  { color:var(--gold);  background:rgba(245,197,66,0.07); border-color:rgba(245,197,66,0.2); }
+  .mono.red   { color:var(--red);   background:rgba(255,68,102,0.07); border-color:rgba(255,68,102,0.2); }
+  .mono.purple{ color:var(--accent2); background:rgba(123,47,255,0.07); border-color:rgba(123,47,255,0.2); }
+
+  /* ── INFO CHIPS ── */
+  .info-row { display:flex; gap:14px; flex-wrap:wrap; margin:14px 0; }
+  .info-chip {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:6px; padding:10px 16px; flex:1; min-width:170px;
+  }
+  .info-chip .ic-label { font-size:10px; color:var(--muted); font-family:'Share Tech Mono',monospace; letter-spacing:2px; margin-bottom:4px; }
+  .info-chip .ic-value { font-size:14px; color:var(--text); font-weight:600; }
+
+  /* ── SUMMARY BAR ── */
+  .summary-bar {
+    display:flex; flex-wrap:wrap; gap:0; align-items:stretch;
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    overflow:hidden; margin:20px 0;
+  }
+  .summary-cell {
+    flex:1; min-width:150px; text-align:center; padding:20px 14px;
+    border-right:1px solid var(--border);
+  }
+  .summary-cell:last-child { border-right:none; }
+  .summary-cell .sc-icon  { font-size:28px; margin-bottom:8px; }
+  .summary-cell .sc-label { font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:1px; margin-bottom:6px; }
+  .summary-cell .sc-desc  { font-size:12px; color:var(--muted); }
+  .summary-arrow { display:flex; align-items:center; padding:0 4px; color:var(--accent2); font-size:20px; }
+
+  /* ── FOOTER ── */
+  .footer { margin-top:60px; text-align:center; padding-top:30px; border-top:1px solid var(--border); }
+  .footer-logo { font-family:'Orbitron',sans-serif; font-size:18px; font-weight:700; color:var(--accent); letter-spacing:2px; margin-bottom:8px; }
+  .footer-sub { font-size:12px; color:var(--muted); font-family:'Share Tech Mono',monospace; }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- ══════════════════════════════════════ HERO -->
+  <div class="hero">
+    <div class="hero-badge">🥷 Cloud Ninjas · Analytics Phase</div>
+    <h1>MANSI<br>TASK FLOW</h1>
+    <div class="hero-sub">// TASK 1 · TASK 2 · TASK 3 — IICS TASKFLOW //</div>
+    <div class="hero-owner">
+      <div class="owner-dot"></div>
+      <div>
+        <div class="owner-name">MANSI</div>
+        <div class="owner-role">Analytics · Dashboard · Orchestration</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ RESPONSIBILITIES -->
+  <div style="margin-top:50px;">
+    <div class="section-label">⬡ MANSI'S RESPONSIBILITIES</div>
+    <div class="resp-highlight">
+      <h4>ANALYTICS PHASE · IICS COMPONENTS</h4>
+      <div class="resp-tags">
+        <span class="resp-tag"><span class="rt-dot"></span>Dataflow Design</span>
+        <span class="resp-tag"><span class="rt-dot"></span>Call Type Performance Mapping</span>
+        <span class="resp-tag"><span class="rt-dot"></span>Aggregator &amp; Expression Transformations</span>
+        <span class="resp-tag"><span class="rt-dot"></span>Mapping Task (MCT) Creation</span>
+        <span class="resp-tag"><span class="rt-dot"></span>IICS Taskflow Orchestration</span>
+        <span class="resp-tag"><span class="rt-dot"></span>Decision &amp; Error Handling</span>
+        <span class="resp-tag"><span class="rt-dot"></span>Email Alert Notification</span>
+        <span class="resp-tag"><span class="rt-dot"></span>Power BI Dashboard &amp; KPIs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ TASK 1 -->
+  <div style="margin-top:44px;">
+    <div class="section-label">⬡ TASK 1 — DATAFLOW DESIGN</div>
+    <div class="task-card">
+      <div class="task-header">
+        <span class="task-num t1">TASK 1</span>
+        <span class="task-title">ETL Dataflow — End-to-End Pipeline Design</span>
+      </div>
+      <div class="task-body">
+
+        <p style="color:var(--muted); font-size:13px; margin-bottom:22px;">
+          Mansi is responsible for designing and understanding the <strong style="color:#fff;">complete ETL dataflow</strong>
+          — from raw source CSV files through to the Power BI dashboard. Each stage has a clear purpose and sequence.
+        </p>
+
+        <div class="stage-list">
+
+          <!-- Stage 1 -->
+          <div class="stage-item">
+            <div class="stage-left">
+              <div class="stage-icon-wrap">📋</div>
+            </div>
+            <div class="stage-right">
+              <h5 style="color:var(--accent);">STAGE 1 · EXTRACT — Analyze Sources</h5>
+              <p>Understand the structure and quality of the raw CSV files before processing begins.</p>
+              <div style="margin-top:8px;">
+                <span class="stage-tag blue">CDR_RAW_Telecom.csv</span>
+                <span class="stage-tag blue">Customer_Master.csv</span>
+                <span class="stage-tag blue">Tower_Master.csv</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 2 -->
+          <div class="stage-item">
+            <div class="stage-left">
+              <div class="stage-icon-wrap">🛬</div>
+            </div>
+            <div class="stage-right">
+              <h5 style="color:var(--green);">STAGE 2 · STAGE — Safe Landing</h5>
+              <p>Load raw data exactly as-is into staging database tables. <strong style="color:#fff;">Do not alter the data yet.</strong> This creates a safe checkpoint before transformations.</p>
+              <div style="margin-top:8px;">
+                <span class="stage-tag green">STG_CDR</span>
+                <span class="stage-tag green">STG_CUSTOMER_MASTER</span>
+                <span class="stage-tag green">STG_TOWER_MASTER</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 3 -->
+          <div class="stage-item">
+            <div class="stage-left">
+              <div class="stage-icon-wrap">⚙️</div>
+            </div>
+            <div class="stage-right">
+              <h5 style="color:var(--accent2);">STAGE 3 · TRANSFORM — Business Logic</h5>
+              <p>Join the staging tables together, clean timestamps, remove duplicates, and calculate the core business metrics.</p>
+              <div style="margin-top:8px;">
+                <span class="stage-tag purple">Join Tables</span>
+                <span class="stage-tag purple">Clean Timestamps</span>
+                <span class="stage-tag purple">Remove Duplicates</span>
+                <span class="stage-tag gold">REVENUE (calc)</span>
+                <span class="stage-tag gold">IsInternational (calc)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 4 -->
+          <div class="stage-item">
+            <div class="stage-left">
+              <div class="stage-icon-wrap">🗄️</div>
+            </div>
+            <div class="stage-right">
+              <h5 style="color:var(--gold);">STAGE 4 · TARGET — Final Load</h5>
+              <p>Save the cleaned and enriched data into the final analytical table, ready for reporting.</p>
+              <div style="margin-top:8px;">
+                <span class="stage-tag gold">FINAL_TELECOM_FACT</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 5 -->
+          <div class="stage-item">
+            <div class="stage-left">
+              <div class="stage-icon-wrap">🔄</div>
+            </div>
+            <div class="stage-right">
+              <h5 style="color:var(--red);">STAGE 5 · ORCHESTRATE — Automate</h5>
+              <p>Build IICS Taskflows to schedule all jobs in order, ensuring Staging finishes before Transformation begins. Set up email alerts for failures.</p>
+              <div style="margin-top:8px;">
+                <span class="stage-tag red">IICS Taskflow</span>
+                <span class="stage-tag red">Dependency Ordering</span>
+                <span class="stage-tag red">Email Alerts on Failure</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 6 -->
+          <div class="stage-item">
+            <div class="stage-left">
+              <div class="stage-icon-wrap">📊</div>
+            </div>
+            <div class="stage-right">
+              <h5 style="color:var(--gold);">STAGE 6 · PRESENT — Dashboard</h5>
+              <p>Connect Power BI to the final analytical tables to visualize the four core KPIs for business insights.</p>
+              <div style="margin-top:8px;">
+                <span class="stage-tag gold">Power BI</span>
+                <span class="stage-tag gold">4 Core KPIs</span>
+                <span class="stage-tag gold">FINAL_TELECOM_FACT</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Pipeline Summary Bar -->
+        <div style="margin-top:24px; font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:3px; margin-bottom:10px;">COMPLETE DATAFLOW SUMMARY</div>
+        <div class="summary-bar">
+          <div class="summary-cell">
+            <div class="sc-icon">📋</div>
+            <div class="sc-label" style="color:var(--accent);">EXTRACT</div>
+            <div class="sc-desc">Analyze 3 CSV Sources</div>
+          </div>
+          <div class="summary-arrow">→</div>
+          <div class="summary-cell">
+            <div class="sc-icon">🛬</div>
+            <div class="sc-label" style="color:var(--green);">STAGE</div>
+            <div class="sc-desc">Raw Load to DB</div>
+          </div>
+          <div class="summary-arrow">→</div>
+          <div class="summary-cell">
+            <div class="sc-icon">⚙️</div>
+            <div class="sc-label" style="color:var(--accent2);">TRANSFORM</div>
+            <div class="sc-desc">Clean · Join · Calculate</div>
+          </div>
+          <div class="summary-arrow">→</div>
+          <div class="summary-cell">
+            <div class="sc-icon">🗄️</div>
+            <div class="sc-label" style="color:var(--gold);">TARGET</div>
+            <div class="sc-desc">FINAL_TELECOM_FACT</div>
+          </div>
+          <div class="summary-arrow">→</div>
+          <div class="summary-cell">
+            <div class="sc-icon">🔄</div>
+            <div class="sc-label" style="color:var(--red);">ORCHESTRATE</div>
+            <div class="sc-desc">Taskflow + Alerts</div>
+          </div>
+          <div class="summary-arrow">→</div>
+          <div class="summary-cell">
+            <div class="sc-icon">📊</div>
+            <div class="sc-label" style="color:var(--gold);">DASHBOARD</div>
+            <div class="sc-desc">Power BI · 4 KPIs</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ TASK 2 -->
+  <div style="margin-top:44px;">
+    <div class="section-label">⬡ TASK 2 — USE CASE 2 · CALL TYPE PERFORMANCE</div>
+    <div class="task-card">
+      <div class="task-header">
+        <span class="task-num t2">TASK 2</span>
+        <span class="task-title">m_CallType_Performance — Call Type Analysis Mapping</span>
+      </div>
+      <div class="task-body">
+
+        <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">
+          Aggregates call data from <span style="color:var(--accent); font-weight:700;">FACT_CDR_FINAL</span> grouped by
+          <span class="mono">CALL_TYPE</span>, calculates total calls, duration, revenue, and average revenue per call,
+          then loads into <span style="color:var(--green); font-weight:700;">CALLTYPE_PERFORMANCE</span>.
+        </p>
+
+        <div class="info-row" style="margin-bottom:20px;">
+          <div class="info-chip">
+            <div class="ic-label">MAPPING NAME</div>
+            <div class="ic-value" style="font-family:'Share Tech Mono',monospace; font-size:13px;">m_CallType_Performance</div>
+          </div>
+          <div class="info-chip">
+            <div class="ic-label">USE CASE</div>
+            <div class="ic-value" style="color:var(--gold); font-family:'Share Tech Mono',monospace; font-size:13px;">USE CASE 2</div>
+          </div>
+          <div class="info-chip">
+            <div class="ic-label">TARGET TABLE</div>
+            <div class="ic-value" style="color:var(--green); font-family:'Share Tech Mono',monospace; font-size:13px;">CALLTYPE_PERFORMANCE</div>
+          </div>
+        </div>
+
+        <!-- Informatica Flow -->
+        <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:3px; margin-bottom:10px;">INFORMATICA MAPPING FLOW</div>
+        <div class="flow-diagram">
+          <div class="flow-node src">
+            <div class="node-icon">📊</div>
+            <div class="node-label">SOURCE</div>
+            <div class="node-name">FACT_CDR_FINAL</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node agg">
+            <div class="node-icon">🔢</div>
+            <div class="node-label">AGGREGATOR</div>
+            <div class="node-name">GROUP BY CALL_TYPE</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node expr">
+            <div class="node-icon">➗</div>
+            <div class="node-label">EXPRESSION</div>
+            <div class="node-name">AVG REVENUE CALC</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node tgt">
+            <div class="node-icon">🗄️</div>
+            <div class="node-label">TARGET</div>
+            <div class="node-name">CALLTYPE_PERFORMANCE</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Aggregator Step -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+            <span style="font-family:'Orbitron',sans-serif; font-size:11px; font-weight:700; color:#fff; background:rgba(245,197,66,0.12); border:1px solid rgba(245,197,66,0.3); padding:3px 12px; border-radius:4px;">AGGREGATOR TRANSFORMATION</span>
+          </div>
+          <div style="margin-bottom:12px;">
+            <span class="mono" style="margin-right:8px;">GROUP BY</span>
+            <span style="font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--gold);">CALL_TYPE</span>
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; margin-bottom:10px; margin-top:14px;">OUTPUT PORTS</div>
+          <div class="agg-grid">
+            <div class="agg-chip">
+              <div class="agg-label">AGGREGATION</div>
+              <div class="agg-expr">COUNT(CALL_ID)</div>
+              <div class="agg-target">→ TOTAL_CALLS</div>
+            </div>
+            <div class="agg-chip">
+              <div class="agg-label">AGGREGATION</div>
+              <div class="agg-expr">SUM(DURATION)</div>
+              <div class="agg-target">→ TOTAL_DURATION</div>
+            </div>
+            <div class="agg-chip">
+              <div class="agg-label">AGGREGATION</div>
+              <div class="agg-expr">SUM(REVENUE)</div>
+              <div class="agg-target">→ TOTAL_REVENUE</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expression Step -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+            <span style="font-family:'Orbitron',sans-serif; font-size:11px; font-weight:700; color:#fff; background:rgba(255,107,53,0.12); border:1px solid rgba(255,107,53,0.3); padding:3px 12px; border-radius:4px;">EXPRESSION TRANSFORMATION</span>
+          </div>
+          <p style="color:var(--muted); font-size:13px; margin-bottom:12px;">Derive average revenue per call from the aggregated totals.</p>
+          <div class="formula-box">
+            <div class="formula-label">DERIVED METRIC · EXPRESSION FORMULA</div>
+            <div class="formula-line">
+              <span class="kw">AVG_REVENUE_PER_CALL</span>
+              <span style="color:#fff;"> = </span>
+              <span class="val">TOTAL_REVENUE</span>
+              <span style="color:#fff;"> / </span>
+              <span class="val">TOTAL_CALLS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Port Mapping Table -->
+        <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:3px; margin-bottom:10px;">PORT → TARGET COLUMN MAPPING</div>
+        <table class="port-table">
+          <thead>
+            <tr>
+              <th>PORT / EXPRESSION</th>
+              <th style="text-align:center;">→</th>
+              <th>TARGET COLUMN (CALLTYPE_PERFORMANCE)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="pexpr">CALL_TYPE (Group By)</td><td class="arr">→</td><td class="ptgt">CALL_TYPE</td></tr>
+            <tr><td class="pexpr">COUNT(CALL_ID)</td><td class="arr">→</td><td class="ptgt">TOTAL_CALLS</td></tr>
+            <tr><td class="pexpr">SUM(DURATION)</td><td class="arr">→</td><td class="ptgt">TOTAL_DURATION</td></tr>
+            <tr><td class="pexpr">SUM(REVENUE)</td><td class="arr">→</td><td class="ptgt">TOTAL_REVENUE</td></tr>
+            <tr><td class="pexpr">TOTAL_REVENUE / TOTAL_CALLS</td><td class="arr">→</td><td class="ptgt">AVG_REVENUE_PER_CALL</td></tr>
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ TASK 3 -->
+  <div style="margin-top:44px;">
+    <div class="section-label">⬡ TASK 3 — IICS TASKFLOW FOR USE CASE 2</div>
+    <div class="task-card">
+      <div class="task-header">
+        <span class="task-num t3">TASK 3</span>
+        <span class="task-title">tf_CallType_Performance_Job — IICS Taskflow Setup</span>
+      </div>
+      <div class="task-body">
+
+        <p style="color:var(--muted); font-size:13px; margin-bottom:22px;">
+          Wrap the mapping in a <strong style="color:#fff;">Mapping Task (MCT)</strong>, build the
+          <strong style="color:#fff;">IICS Taskflow canvas</strong> with a Decision node for error handling,
+          and configure a Notification Task to send alerts on failure.
+        </p>
+
+        <!-- IICS Taskflow Visual Canvas -->
+        <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:3px; margin-bottom:10px;">TASKFLOW CANVAS — VISUAL DIAGRAM</div>
+        <div class="tf-canvas">
+          <div class="tf-canvas-title">⬡ &nbsp;</div>
+
+          <!-- Start -->
+          <div class="tf-row">
+            <div class="tf-node">
+              <div class="tf-box start">
+                <div class="tf-box-icon">▶</div>
+                START
+              </div>
+            </div>
+          </div>
+          <div class="tf-row"><div class="tf-arrow-v">↓</div></div>
+
+          <!-- MCT Data Task -->
+          <div class="tf-row">
+            <div class="tf-node">
+              <div class="tf-box mct">
+                <div class="tf-box-icon">⚙️</div>
+                DATA TASK
+                <div class="tf-box-sub">Run_Performance_Mapping</div>
+                <div class="tf-box-sub" style="color:var(--accent2);">mct_CallType_Performance</div>
+              </div>
+            </div>
+          </div>
+          <div class="tf-row"><div class="tf-arrow-v">↓</div></div>
+
+          <!-- Decision -->
+          <div class="tf-row">
+            <div class="tf-node">
+              <div class="tf-box decision">
+                <div style="text-align:center; line-height:1.3;">
+                  <div style="font-size:16px;">◆</div>
+                  <div style="font-size:9px;">Check_Success</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Two paths -->
+          <div style="display:flex; justify-content:center; align-items:flex-start; gap:60px; margin-top:8px; flex-wrap:wrap;">
+
+            <!-- SUCCESS PATH -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+              <div class="tf-path-label success-path">✓ STATUS = SUCCESS</div>
+              <div class="tf-arrow-v" style="color:var(--green);">↓</div>
+              <div class="tf-box success" style="width:130px;">
+                <div class="tf-box-icon">🏁</div>
+                END
+                <div class="tf-box-sub">Job Complete</div>
+              </div>
+            </div>
+
+            <!-- FAILURE PATH -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+              <div class="tf-path-label fail-path">✗ OTHERWISE (FAILURE)</div>
+              <div class="tf-arrow-v" style="color:var(--red);">↓</div>
+              <div class="tf-box notif" style="width:130px;">
+                <div class="tf-box-icon">📧</div>
+                NOTIFICATION
+                <div class="tf-box-sub">Email Alert Sent</div>
+              </div>
+              <div class="tf-arrow-v" style="color:var(--red);">↓</div>
+              <div class="tf-box end" style="width:130px;">
+                <div class="tf-box-icon">🏁</div>
+                END
+                <div class="tf-box-sub">With Error Log</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Step-by-step setup -->
+        <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:3px; margin-bottom:14px;">STEP-BY-STEP SETUP IN IICS</div>
+        <div class="steps-wrap">
+
+          <!-- Step 1 -->
+          <div class="step-item">
+            <div class="step-bubble">1</div>
+            <div class="step-content">
+              <h5>WRAP THE MAPPING IN A MAPPING TASK (MCT)</h5>
+              <p>In IICS, a Taskflow cannot run a raw Mapping directly — it must be wrapped first.</p>
+              <ul>
+                <li>Go to <span class="mono">New &gt; Tasks &gt; Mapping Task</span></li>
+                <li>Name it: <span class="mono purple">mct_CallType_Performance</span></li>
+                <li>Select Mapping: Choose your <span class="mono">Source → Aggregator → Expression → Target</span> flow</li>
+                <li>Runtime Environment: Select your <span class="mono green">Secure Agent</span></li>
+                <li>Click <span class="mono gold">Finish</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-item">
+            <div class="step-bubble">2</div>
+            <div class="step-content">
+              <h5>BUILD THE TASKFLOW CANVAS</h5>
+              <p>Create the Taskflow that orchestrates the mapping execution with decision logic.</p>
+              <ul>
+                <li>Go to <span class="mono">New &gt; Taskflows &gt; Taskflow &gt; Create</span></li>
+                <li>Name it: <span class="mono purple">tf_CallType_Performance_Job</span></li>
+                <li>Canvas opens with a <span class="mono green">Start</span> node and <span class="mono red">End</span> node</li>
+                <li>Drag a <strong style="color:#fff;">Data Task</strong> step between Start and End — name it <span class="mono">Run_Performance_Mapping</span></li>
+                <li>In the <strong>Data Task tab</strong>, click Select → choose <span class="mono purple">mct_CallType_Performance</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-item">
+            <div class="step-bubble">3</div>
+            <div class="step-content">
+              <h5>ADD DECISION STEP — ERROR HANDLING</h5>
+              <p>After the Data Task, add a Decision step to evaluate success or failure.</p>
+              <ul>
+                <li>Drag a <strong style="color:#fff;">Decision step</strong> after the Data Task — name it <span class="mono gold">Check_Success</span></li>
+                <li>Create condition: <span class="mono">Run_Performance_Mapping → Task Status</span> <strong style="color:#fff;"> = </strong> <span class="mono green">1 (Success)</span></li>
+                <li><strong style="color:var(--green);">Path 1 (Success):</strong> Connect directly to the End node</li>
+                <li><strong style="color:var(--red);">Otherwise (Failure):</strong> Drag a <span class="mono red">Notification Task</span> onto this path to send an email alert</li>
+                <li>Connect the bottom of the Notification Task → End node</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="step-item">
+            <div class="step-bubble">4</div>
+            <div class="step-content">
+              <h5>SAVE AND PUBLISH</h5>
+              <p>Finalize and publish the Taskflow to make it available for scheduling and execution.</p>
+              <ul>
+                <li>Click <span class="mono green">Save</span> in the top right corner</li>
+                <li>Click <span class="mono gold">Publish</span> to deploy the Taskflow to the IICS environment</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ SUMMARY -->
+  <div style="margin-top:44px;">
+    <div class="section-label">⬡ MANSI'S DELIVERABLES — SUMMARY</div>
+    <div class="summary-bar">
+      <div class="summary-cell">
+        <div class="sc-icon">🗺️</div>
+        <div class="sc-label" style="color:var(--accent);">TASK 1</div>
+        <div class="sc-desc">ETL Dataflow Design · 6-Stage Pipeline</div>
+      </div>
+      <div class="summary-arrow">→</div>
+      <div class="summary-cell">
+        <div class="sc-icon">📈</div>
+        <div class="sc-label" style="color:var(--gold);">TASK 2</div>
+        <div class="sc-desc">m_CallType_Performance Mapping</div>
+      </div>
+      <div class="summary-arrow">→</div>
+      <div class="summary-cell">
+        <div class="sc-icon">🔄</div>
+        <div class="sc-label" style="color:var(--accent2);">TASK 3</div>
+        <div class="sc-desc">IICS Taskflow + Decision + Alert</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-logo">🥷 CLOUD NINJAS</div>
+    <div class="footer-sub">Mansi · Analytics Phase · Telecom ETL Pipeline · Informatica IICS · 2026</div>
+    <div style="margin-top:10px; font-size:11px; color:var(--muted); opacity:0.4; font-family:'Share Tech Mono',monospace;">
+      Ruchitha · Bhanu Teja · Prasanna · <strong style="color:var(--gold); opacity:1;">Mansi</strong>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
